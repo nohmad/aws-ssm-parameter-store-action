@@ -1,0 +1,38 @@
+name: AWS SSM Parameter Store Action
+description: Put parameters' value out to file by path
+
+inputs:
+  aws-access-key-id:
+    description: AWS_ACCESS_KEY_ID
+    required: true
+  aws-secret-access-key:
+    description: AWS_SECRET_ACCESS_KEY
+    required: true
+  aws-region:
+    description: AWS_REGION
+    required: true
+  targets:
+    description: Target Instances
+    required: true
+  path:
+    description: Path to parameters
+    required: true
+  output:
+    description: File name to be written
+    required: true
+  recursive:
+    description: Whether to get recursively
+    required: false
+    default: false
+
+outputs:
+  count:
+    description: Number of parameters matched by path given
+
+runs:
+  using: node12
+  main: dist/index.js
+
+branding:
+  icon: chevron-up
+  color: green
