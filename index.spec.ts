@@ -1,6 +1,7 @@
 import * as core from '@actions/core';
 import { SSMClient } from '@aws-sdk/client-ssm';
 import fs from 'fs';
+import { EOL } from 'os';
 
 import main from './index';
 
@@ -33,7 +34,7 @@ describe("aws-parameter-store-action", () => {
 
     await main();
 
-    expect(fs.writeFileSync).toHaveBeenCalledWith(DEFAULT_INPUTS.get('filename'), `XXX=${Value}\nXXX=${Value}`);
+    expect(fs.writeFileSync).toHaveBeenCalledWith(DEFAULT_INPUTS.get('filename'), `XXX=${Value}${EOL}XXX=${Value}`);
     expect(core.setOutput).toHaveBeenCalledWith('count', 2);
   });
 });

@@ -1,6 +1,7 @@
 import { SSMClient, GetParametersByPathCommand } from '@aws-sdk/client-ssm';
 import * as core from '@actions/core';
 import fs from 'fs';
+import { EOL } from 'os';
 
 async function main() {
   const credentials = {
@@ -21,7 +22,7 @@ async function main() {
     const {Name, Value} = param;
     const name = Name?.replace(Path, '');
     return `${name}=${Value}`;
-  }).join('\n');  
+  }).join(EOL);
   fs.writeFileSync(core.getInput('filename', {required: true}), lines);
   core.setOutput('count', Parameters?.length);
 }
