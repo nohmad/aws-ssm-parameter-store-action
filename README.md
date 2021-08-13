@@ -1,6 +1,6 @@
-# AWS SSM Send-Command Action
+# AWS SSM Parameter Store Action
 
-Run AWS's SSM Send-Command API using this action. Refer to [AWS SDK for JavaScript v3](https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/clients/client-ssm/interfaces/sendcommandcommandinput.html).
+Write each pair of name and value of parameters selected by path out to file, each combined by `=` and `\n`, so as to conform `.env` format.
 
 ```yml
   - name: Run aws ssm send-command
@@ -9,11 +9,8 @@ Run AWS's SSM Send-Command API using this action. Refer to [AWS SDK for JavaScri
       aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
       aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       aws-region: ap-northeast-2
-      targets: |
-        [{"Key":"InstanceIds","Values":["i-1234567890"]}]
-      document-name: AWS-RunShellScript
-      parameters: |
-        {"commands":["uname -a"]}
+      path: /config/application/production/
+      filename: .env
 ```
 
 ## Inputs
@@ -30,48 +27,15 @@ Run AWS's SSM Send-Command API using this action. Refer to [AWS SDK for JavaScri
 
 **Required**. `secrets.AWS_REGION`
 
-### document-name
+### path
 
-Currently, only the **AWS-RunShellScript** was tested.
-
-### targets
-
-**Required**. Specify target instances by JSON format.
-```json
-[
-  {
-    "Key": "tag:Name", "Values": ["ec2-instance-name"]
-  },
-  {
-    "Key": "InstanceIds", "Values": ["i-1234567890"]
-  }
-]
-```
-
-### parameters
-
-**Required**. Parameters to the document. Must be formatted as JSON:
-```json
-{"commands": ["uname -a"]}
-```
+**Required**.
 
 ## Outputs
 
-### status
+### count
 
-Taken from `.CommandInvocations[0].Status`.  `Success` or `Failure`
-
-### command-id
-
-`CommandId` to check the details of the command executed. Run following command to see the details:
-
-```sh
-aws ssm list-command-invocations --command-id <command-id> --details
-```
-
-### output
-
-Command output
+Number of parameters brought by path.
 
 ## Author
 

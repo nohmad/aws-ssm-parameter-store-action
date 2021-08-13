@@ -1,5 +1,6 @@
-import { SSMClient, SendCommandCommand, ListCommandInvocationsCommand } from '@aws-sdk/client-ssm';
+import { SSMClient, GetParametersByPathCommand } from '@aws-sdk/client-ssm';
 import * as core from '@actions/core';
+import fs from 'fs';
 
 async function main() {
   const credentials = {
@@ -7,43 +8,22 @@ async function main() {
     secretAccessKey: core.getInput('aws-secret-access-key'),
   };
   const region = core.getInput('aws-region');
+  const Path = core.getInput('path');
   const client = new SSMClient({region, credentials});
-  const TimeoutSeconds = parseInt(core.getInput('timeout'));
-  const parameters = core.getInput('parameters', {required: true});
-  const command = new SendCommandCommand({
-    TimeoutSeconds,
-    Targets: JSON.parse(core.getInput('targets', {required: true})),
-    DocumentName: core.getInput('document-name'),
-    Parameters: JSON.parse(parameters),
+  const command = new GetParametersByPathCommand({
+    Path,
+    WithDecryption: core.getBooleanInput('with-decryption'),
+    Recursive: core.getBooleanInput('recursive'),
   });
-  if (core.isDebug()) {
-    core.debug(parameters);
-    core.debug(JSON.stringify(command));
-  }
   const result = await client.send(command);
-  const CommandId = result.Command?.CommandId;
-  core.setOutput('command-id', CommandId);
-  
-  const int32 = new Int32Array(new SharedArrayBuffer(4));
-  const outputs = [];
-  let status = 'Pending';
-  for (let i = 0; i < TimeoutSeconds; i++) {
-    Atomics.wait(int32, 0, 0, 1000);
-    const result = await client.send(new ListCommandInvocationsCommand({CommandId, Details: true}));
-    const invocation = result.CommandInvocations?.[0] || {};
-    status = invocation.Status as string;
-    if (['Success', 'Failure'].includes(status)) {
-      for (const cp of invocation.CommandPlugins || []) {
-        outputs.push(cp.Output as string);
-      }
-      break;
-    }
-  }
-  if (status != 'Success') {
-    throw new Error(`Failed to send command: ${status}`);
-  }
-  core.setOutput('status', status);
-  core.setOutput('output', outputs.join('\n'));
+  const {Parameters = []} = result;
+  const lines = Parameters?.map(param => {
+    const {Name, Value} = param;
+    const name = Name?.replace(Path, '');
+    return `${name}=${Value}`;
+  }).join('\n');  
+  fs.writeFileSync(core.getInput('filename', {required: true}), lines);
+  core.setOutput('count', Parameters?.length);
 }
 main().catch(e => core.setFailed(e.message));
 

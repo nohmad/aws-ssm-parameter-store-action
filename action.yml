@@ -11,19 +11,20 @@ inputs:
   aws-region:
     description: AWS_REGION
     required: true
-  targets:
-    description: Target Instances
-    required: true
   path:
     description: Path to parameters
     required: true
-  output:
+  filename:
     description: File name to be written
     required: true
   recursive:
     description: Whether to get recursively
     required: false
-    default: false
+    default: 'false'
+  with-decryption:
+    description: Whether to decrypt
+    required: false
+    default: 'true'
 
 outputs:
   count:
