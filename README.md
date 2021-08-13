@@ -4,7 +4,7 @@ Write each pair of name and value of parameters selected by path out to file, ea
 
 ```yml
   - name: Run aws ssm send-command
-    uses: nohmad/aws-ssm-send-command-action@master
+    uses: nohmad/aws-ssm-parameter-store-action@master
     with:
       aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
       aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -30,6 +30,10 @@ Write each pair of name and value of parameters selected by path out to file, ea
 ### path
 
 **Required**.
+
+### filename
+
+**Required**. Filename to save the parameter values
 
 ## Outputs
 
