@@ -1,9 +1,9 @@
 {
   "name": "aws-parameter-store-action",
   "version": "1.0.0",
-  "description": "AWS SSM Send-Command Action",
+  "description": "AWS SSM Parameter Store Action",
   "main": "dist/index.js",
-  "repository": "https://github.com/nohmad/aws-ssm-send-command-action.git",
+  "repository": "https://github.com/nohmad/aws-ssm-parameter-store-action.git",
   "author": "GY Noh <nohmad@gmail.com>",
   "license": "MIT",
   "scripts": {
