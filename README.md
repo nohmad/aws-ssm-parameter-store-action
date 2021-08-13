@@ -2,8 +2,15 @@
 
 Write each pair of name and value of parameters selected by path out to file, each combined by `=` and `\n`, so as to conform `.env` format.
 
+Suppose you have following parameters in AWS's parameter store:
+
+  * `/config/application/production/API_ENDPOINT`
+  * `/config/application/production/API_KEY`
+
+Run this action:
+
 ```yml
-  - name: Run aws ssm send-command
+  - name: Configure environment variables
     uses: nohmad/aws-ssm-parameter-store-action@master
     with:
       aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -11,6 +18,13 @@ Write each pair of name and value of parameters selected by path out to file, ea
       aws-region: ap-northeast-2
       path: /config/application/production/
       filename: .env
+```
+
+Then, you'll have `.env` file with following:
+
+```
+API_ENDPOINT=...
+API_KEY=...
 ```
 
 ## Inputs
