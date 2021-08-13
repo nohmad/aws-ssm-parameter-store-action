@@ -10,7 +10,7 @@ Suppose you have following parameters in AWS's parameter store:
 Run this action:
 
 ```yml
-  - name: Configure environment variables
+  - name: Prepare .env file
     uses: nohmad/aws-ssm-parameter-store-action@master
     with:
       aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
