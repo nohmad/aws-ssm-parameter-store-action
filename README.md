@@ -10,14 +10,14 @@ Suppose you have following parameters in AWS's parameter store:
 Run this action:
 
 ```yml
-  - name: Prepare .env file
-    uses: nohmad/aws-ssm-parameter-store-action@master
-    with:
-      aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      aws-region: ap-northeast-2
-      path: /config/application/production/
-      filename: .env
+    - name: Prepare .env file
+      uses: nohmad/aws-ssm-parameter-store-action@master
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ap-northeast-2
+        path: /config/application/production/
+        filename: .env
 ```
 
 Then, you'll have `.env` file with following:
@@ -47,7 +47,11 @@ API_KEY=...
 
 ### filename
 
-**Required**. Filename to save the parameter values
+Filename to dump the parameters
+
+### format
+
+Format to save as. Default to *dotenv* format. *as-is* is also available.
 
 ## Outputs
 

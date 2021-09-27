@@ -16,7 +16,7 @@ inputs:
     required: true
   filename:
     description: File name to be written
-    required: true
+    required: false
   recursive:
     description: Whether to get recursively
     required: false
@@ -25,6 +25,10 @@ inputs:
     description: Whether to decrypt
     required: false
     default: 'true'
+  format:
+    description: Format to save as _dotenv_ or _as-is_
+    required: false
+    default: 'dotenv'
 
 outputs:
   count:

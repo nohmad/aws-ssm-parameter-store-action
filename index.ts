@@ -1,7 +1,45 @@
-import { SSMClient, GetParametersByPathCommand } from '@aws-sdk/client-ssm';
+import path from 'path';
+import { SSMClient, GetParametersByPathCommand, GetParametersByPathCommandOutput, Parameter,  } from '@aws-sdk/client-ssm';
 import * as core from '@actions/core';
 import fs from 'fs';
 import { EOL } from 'os';
+
+interface Formatter {
+  format(output: GetParametersByPathCommandOutput): void;
+}
+
+class DotenvFormatter implements Formatter {
+  path: string;
+  constructor(path: string) {
+    this.path = path;
+  }
+
+  format(output: GetParametersByPathCommandOutput) {
+    const params = output.Parameters || [];
+    const content = params.map((param: Parameter) => {
+      const {Name, Value} = param;
+      const name = Name?.replace(this.path, '');
+      return `${name}=${Value}`;
+    }).join(EOL);
+    const filename = core.getInput('filename') || path.basename(this.path);
+    fs.writeFileSync(filename, content || '');
+    core.setOutput('count', params.length);
+  }
+}
+
+class AsisFormatter implements Formatter {
+  path: string
+  constructor(path: string) {
+    this.path = path;
+  }
+
+  format(output: GetParametersByPathCommandOutput) {
+    const content = output.Parameters?.[0]?.Value;
+    const filename = core.getInput('filename') || path.basename(this.path);
+    fs.writeFileSync(filename, content || '');
+    core.setOutput('count', 1);
+  }
+}
 
 async function main() {
   const credentials = {
@@ -16,15 +54,10 @@ async function main() {
     WithDecryption: core.getBooleanInput('with-decryption'),
     Recursive: core.getBooleanInput('recursive'),
   });
-  const result = await client.send(command);
-  const {Parameters = []} = result;
-  const lines = Parameters?.map(param => {
-    const {Name, Value} = param;
-    const name = Name?.replace(Path, '');
-    return `${name}=${Value}`;
-  }).join(EOL);
-  fs.writeFileSync(core.getInput('filename', {required: true}), lines);
-  core.setOutput('count', Parameters?.length);
+
+  const result: GetParametersByPathCommandOutput = await client.send(command);
+  const formatter: Formatter = core.getInput('format') == 'as-is' ? new AsisFormatter(Path) : new DotenvFormatter(Path);
+  formatter.format(result);
 }
 main().catch(e => core.setFailed(e.message));
 
