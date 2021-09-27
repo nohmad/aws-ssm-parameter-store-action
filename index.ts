@@ -16,12 +16,8 @@ class DotenvFormatter implements Formatter {
 
   format(output: GetParametersByPathCommandOutput) {
     const params = output.Parameters || [];
-    const content = params.map((param: Parameter) => {
-      const {Name, Value} = param;
-      const name = Name?.replace(this.path, '');
-      return `${name}=${Value}`;
-    }).join(EOL);
-    const filename = core.getInput('filename') || path.basename(this.path);
+    const content = params.map((param: Parameter) => `${path.basename(param.Name || '')}=${param.Value}`).join(EOL);
+    const filename = core.getInput('filename');
     fs.writeFileSync(filename, content || '');
     core.setOutput('count', params.length);
   }
@@ -34,9 +30,9 @@ class AsisFormatter implements Formatter {
   }
 
   format(output: GetParametersByPathCommandOutput) {
-    const content = output.Parameters?.[0]?.Value;
-    const filename = core.getInput('filename') || path.basename(this.path);
-    fs.writeFileSync(filename, content || '');
+    const {Name = '', Value = ''} = output.Parameters?.[0] || {};
+    const filename = core.getInput('filename') || path.basename(Name);
+    fs.writeFileSync(filename, Value);
     core.setOutput('count', 1);
   }
 }

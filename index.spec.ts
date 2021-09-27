@@ -17,24 +17,38 @@ const DEFAULT_INPUTS = new Map([
   ['aws-secret-access-key', 'aws-secret-access-key'],
   ['aws-region', 'aws-region'],
   ['path', '/config/path/'],
-  ['filename', 'filename.txt'],
 ]);
 
 describe("aws-parameter-store-action", () => {
-  beforeEach(() => {
-    getInput.mockImplementation((key) => DEFAULT_INPUTS.get(key) as string);
-  });
+  it("get parameters by path and then write out to .env file", async () => {
+    const inputs = new Map([...DEFAULT_INPUTS,
+      ['filename', 'filename.txt'],    
+    ]);
+    getInput.mockImplementation((key) => inputs.get(key) as string);
 
-  it("get parameters by path and then write out to file", async () => {
-    const [Name, Value] = ['/config/path/XXX', 'yyy'];
-    const send = jest.fn(async () => {
-      return {Parameters: [{Name, Value}, {Name, Value}]};
-    });
+    const Parameters = [{Name: '/config/path/xxx', Value: 'xxx'}, {Name: '/config/path/yyy', Value: 'yyy'}];
+    const send = jest.fn(async () => Object.assign({Parameters}));
     (MockedClient as jest.Mock).mockImplementation(() => ({send}));
 
     await main();
 
-    expect(fs.writeFileSync).toHaveBeenCalledWith(DEFAULT_INPUTS.get('filename'), `XXX=${Value}${EOL}XXX=${Value}`);
+    expect(fs.writeFileSync).toHaveBeenCalledWith(inputs.get('filename'), `xxx=xxx${EOL}yyy=yyy`);
     expect(core.setOutput).toHaveBeenCalledWith('count', 2);
+  });
+
+  it("get parameters by path and then write out to file as is", async () => {
+    const inputs = new Map([...DEFAULT_INPUTS,
+      ['format', 'as-is'],
+    ]);
+    getInput.mockImplementation((key) => inputs.get(key) as string);
+
+    const Parameters = [{Name: '/config/path/xxx', Value: 'yyy'}];
+    const send = jest.fn(async () => Object.assign({Parameters}));
+    (MockedClient as jest.Mock).mockImplementation(() => ({send}));
+
+    await main();
+
+    expect(fs.writeFileSync).toHaveBeenCalledWith('xxx', 'yyy');
+    expect(core.setOutput).toHaveBeenCalledWith('count', 1);
   });
 });
