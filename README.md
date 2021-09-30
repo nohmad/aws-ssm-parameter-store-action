@@ -17,6 +17,7 @@ Run this action:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ap-northeast-2
         path: /config/application/production/
+        format: dotenv
         filename: .env
 ```
 
@@ -61,7 +62,7 @@ Format to save as. *dotenv* format. *as-is* is also available. Even if you omit,
 
 Base name and the value of the parameters are mapped to the outputs.
 
-If you have a parameter named `/config/foo`, and you specified the input `path` as `/config/`, then you can access the value of `foo` by `${{steps.step-id.outputs.foo}}`.
+If you have a parameter named `/config/foo`, and you specified the input `path` as `/config/`, then you can access the value of the `/config/foo` by `${{steps.step-id.outputs.foo}}`.
 
 ## Author
 
