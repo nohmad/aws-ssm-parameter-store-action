@@ -43,21 +43,25 @@ API_KEY=...
 
 ### path
 
-**Required**.
+**Required**. Path to parameters to get by
+
+### pattern
+
+Filter parameters specified by pattern
 
 ### filename
 
-Filename to dump the parameters
+Filename to save the parameters
 
 ### format
 
-Format to save as. Default to *dotenv* format. *as-is* is also available.
+Format to save as. *dotenv* format. *as-is* is also available. Even if you omit, you can still access to its `outputs`.
 
 ## Outputs
 
-### count
+Base name and the value of the parameters are mapped to the outputs.
 
-Number of parameters brought by path.
+If you have a parameter named `/config/foo`, and you specified the input `path` as `/config/`, then you can access the value of `foo` by `${{steps.step-id.outputs.foo}}`.
 
 ## Author
 

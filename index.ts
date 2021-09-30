@@ -1,41 +1,42 @@
-import path from 'path';
-import { SSMClient, GetParametersByPathCommand, GetParametersByPathCommandOutput, Parameter,  } from '@aws-sdk/client-ssm';
-import * as core from '@actions/core';
 import fs from 'fs';
 import { EOL } from 'os';
+import path from 'path';
+import { SSMClient, GetParametersByPathCommand, GetParametersByPathCommandOutput, Parameter } from '@aws-sdk/client-ssm';
+import * as core from '@actions/core';
+import minimatch from 'minimatch';
 
 interface Formatter {
-  format(output: GetParametersByPathCommandOutput): void;
+  save(parameters: MandatoryParameter[]): void;
 }
 
 class DotenvFormatter implements Formatter {
-  path: string;
-  constructor(path: string) {
-    this.path = path;
-  }
-
-  format(output: GetParametersByPathCommandOutput) {
-    const params = output.Parameters || [];
-    const content = params.map((param: Parameter) => `${path.basename(param.Name || '')}=${param.Value}`).join(EOL);
+  save(parameters: MandatoryParameter[]) {
     const filename = core.getInput('filename');
+    const content = parameters.map(param => `${path.basename(param.Name)}=${param.Value}`).join(EOL);
     fs.writeFileSync(filename, content || '');
-    core.setOutput('count', params.length);
   }
 }
 
 class AsisFormatter implements Formatter {
-  path: string
-  constructor(path: string) {
-    this.path = path;
-  }
-
-  format(output: GetParametersByPathCommandOutput) {
-    const {Name = '', Value = ''} = output.Parameters?.[0] || {};
+  save(parameters: MandatoryParameter[]) {
+    const {Name, Value} = parameters[0];
+    if (!Name || !Value) {
+      throw new Error("No parameter found!");
+    }
     const filename = core.getInput('filename') || path.basename(Name);
     fs.writeFileSync(filename, Value);
-    core.setOutput('count', 1);
   }
 }
+
+const FORMATTERS = new Map([
+  ['dotenv', new DotenvFormatter()],
+  ['as-is',  new AsisFormatter()],
+]);
+
+interface MandatoryParameter extends Parameter {
+  Name: string;
+}
+type MandatorFunction = (parameters: Parameter[]) => MandatoryParameter[];
 
 async function main() {
   const credentials = {
@@ -52,8 +53,17 @@ async function main() {
   });
 
   const result: GetParametersByPathCommandOutput = await client.send(command);
-  const formatter: Formatter = core.getInput('format') == 'as-is' ? new AsisFormatter(Path) : new DotenvFormatter(Path);
-  formatter.format(result);
+  const pattern = core.getInput('pattern');
+  const matcher = (parameter: MandatoryParameter) => pattern ? minimatch(parameter.Name, pattern) : true;
+  const mandate = ((parameters: Parameter[]) => parameters.filter(p => p.Name && p.Value)) as MandatorFunction;
+  const parameters = mandate(result.Parameters || []).filter(matcher);
+  parameters.forEach(parameter => {
+    core.setOutput(path.basename(parameter.Name), parameter.Value);
+  });
+  const formatter = FORMATTERS.get(core.getInput('format'));
+  if (formatter) {
+    formatter.save(parameters);
+  }
 }
 main().catch(e => core.setFailed(e.message));
 

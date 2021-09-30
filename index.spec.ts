@@ -22,6 +22,7 @@ const DEFAULT_INPUTS = new Map([
 describe("aws-parameter-store-action", () => {
   it("get parameters by path and then write out to .env file", async () => {
     const inputs = new Map([...DEFAULT_INPUTS,
+      ['format', 'dotenv'],
       ['filename', 'filename.txt'],    
     ]);
     getInput.mockImplementation((key) => inputs.get(key) as string);
@@ -33,7 +34,8 @@ describe("aws-parameter-store-action", () => {
     await main();
 
     expect(fs.writeFileSync).toHaveBeenCalledWith(inputs.get('filename'), `xxx=xxx${EOL}yyy=yyy`);
-    expect(core.setOutput).toHaveBeenCalledWith('count', 2);
+    expect(core.setOutput).toHaveBeenCalledWith('xxx', 'xxx');
+    expect(core.setOutput).toHaveBeenCalledWith('yyy', 'yyy');
   });
 
   it("get parameters by path and then write out to file as is", async () => {
@@ -49,6 +51,6 @@ describe("aws-parameter-store-action", () => {
     await main();
 
     expect(fs.writeFileSync).toHaveBeenCalledWith('xxx', 'yyy');
-    expect(core.setOutput).toHaveBeenCalledWith('count', 1);
+    expect(core.setOutput).toHaveBeenCalledWith('xxx', 'yyy');
   });
 });
