@@ -101,16 +101,15 @@ describe("aws-parameter-store-action", () => {
     expect(core.setOutput).not.toHaveBeenCalled();
   });
 
-  // it("prints out debug log if enabled debugging", async () => {
-  //   const isDebug = core.isDebug as jest.MockedFunction<typeof core.isDebug>;
-  //   isDebug.mockReturnValue(true);
+  it("prints out debug log if enabled debugging", async () => {
+    (core.isDebug as jest.MockedFunction<typeof core.isDebug>).mockReturnValue(true);
 
-  //   const result = {xxx: 'yyy'};
-  //   const send = jest.fn(async () => result);
-  //   (MockedClient as jest.Mock).mockImplementation(() => ({send}));
+    const result = {xxx: 'yyy'};
+    const send = jest.fn(async () => result);
+    (MockedClient as jest.Mock).mockImplementation(() => ({send}));
 
-  //   await main();
+    await main();
 
-  //   expect(core.debug).toHaveBeenCalledWith(JSON.stringify(result));
-  // });
+    expect(core.debug).toHaveBeenCalledWith(JSON.stringify(result));
+  });
 });

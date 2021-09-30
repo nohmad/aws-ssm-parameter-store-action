@@ -41,9 +41,9 @@ async function main() {
   });
 
   const result = await client.send(command);
-  // if (core.isDebug()) {
-  //   core.debug(JSON.stringify(result));
-  // }
+  if (core.isDebug()) {
+    core.debug(JSON.stringify(result));
+  }
   const pattern = core.getInput('pattern');
   const matcher = (parameter: MandatoryParameter) => pattern ? minimatch(path.basename(parameter.Name), pattern) : true;
   const mandate = ((parameters: Parameter[]) => parameters.filter(p => p.Name && p.Value)) as MandatorFunction;
