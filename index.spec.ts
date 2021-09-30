@@ -20,7 +20,7 @@ const DEFAULT_INPUTS = new Map([
 ]);
 
 describe("aws-parameter-store-action", () => {
-  it("get parameters by path and then write out to .env file", async () => {
+  it("writes out as dotenv format to the given file", async () => {
     const inputs = new Map([...DEFAULT_INPUTS,
       ['format', 'dotenv'],
       ['filename', 'filename.txt'],    
@@ -38,7 +38,40 @@ describe("aws-parameter-store-action", () => {
     expect(core.setOutput).toHaveBeenCalledWith('yyy', 'yyy');
   });
 
-  it("get parameters by path and then write out to file as is", async () => {
+  it("writes out as dotenv format matches pattern to file named .env if no filename given", async () => {
+    const inputs = new Map([...DEFAULT_INPUTS,
+      ['format', 'dotenv'],
+      ['pattern', 'xxx'],
+    ]);
+    getInput.mockImplementation((key) => inputs.get(key) as string);
+
+    const Parameters = [{Name: '/config/path/xxx', Value: 'xxx'}, {Name: '/config/path/yyy', Value: 'yyy'}];
+    const send = jest.fn(async () => Object.assign({Parameters}));
+    (MockedClient as jest.Mock).mockImplementation(() => ({send}));
+
+    await main();
+
+    expect(fs.writeFileSync).toHaveBeenCalledWith('.env', `xxx=xxx`);
+  });
+
+  it("writes out as-is to the given file", async () => {
+    const inputs = new Map([...DEFAULT_INPUTS,
+      ['format', 'as-is'],
+      ['filename', 'xxx.txt'],
+    ]);
+    getInput.mockImplementation((key) => inputs.get(key) as string);
+
+    const Parameters = [{Name: '/config/path/xxx', Value: 'yyy'}];
+    const send = jest.fn(async () => Object.assign({Parameters}));
+    (MockedClient as jest.Mock).mockImplementation(() => ({send}));
+
+    await main();
+
+    expect(fs.writeFileSync).toHaveBeenCalledWith('xxx.txt', 'yyy');
+    expect(core.setOutput).toHaveBeenCalledWith('xxx', 'yyy');
+  });
+
+  it("writes out as-is to the first element's name of the list retrieved", async () => {
     const inputs = new Map([...DEFAULT_INPUTS,
       ['format', 'as-is'],
     ]);
@@ -52,5 +85,19 @@ describe("aws-parameter-store-action", () => {
 
     expect(fs.writeFileSync).toHaveBeenCalledWith('xxx', 'yyy');
     expect(core.setOutput).toHaveBeenCalledWith('xxx', 'yyy');
+  });
+
+  it("retrieves parameters without format", async () => {
+    const inputs = new Map([...DEFAULT_INPUTS,
+      ['format', undefined],
+    ]);
+    getInput.mockImplementation((key) => inputs.get(key) as string);
+
+    const send = jest.fn(async () => Object.assign({}));
+    (MockedClient as jest.Mock).mockImplementation(() => ({send}));
+
+    await main();
+
+    expect(core.setOutput).not.toHaveBeenCalled();
   });
 });

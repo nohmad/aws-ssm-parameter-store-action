@@ -5,38 +5,26 @@ import { SSMClient, GetParametersByPathCommand, GetParametersByPathCommandOutput
 import * as core from '@actions/core';
 import minimatch from 'minimatch';
 
-interface Formatter {
-  save(parameters: MandatoryParameter[]): void;
-}
-
-class DotenvFormatter implements Formatter {
-  save(parameters: MandatoryParameter[]) {
-    const filename = core.getInput('filename');
-    const content = parameters.map(param => `${path.basename(param.Name)}=${param.Value}`).join(EOL);
-    fs.writeFileSync(filename, content || '');
-  }
-}
-
-class AsisFormatter implements Formatter {
-  save(parameters: MandatoryParameter[]) {
-    const {Name, Value} = parameters[0];
-    if (!Name || !Value) {
-      throw new Error("No parameter found!");
-    }
-    const filename = core.getInput('filename') || path.basename(Name);
-    fs.writeFileSync(filename, Value);
-  }
-}
-
-const FORMATTERS = new Map([
-  ['dotenv', new DotenvFormatter()],
-  ['as-is',  new AsisFormatter()],
-]);
+const DEFAULT_DOTENV_FILENAME = '.env';
 
 interface MandatoryParameter extends Parameter {
   Name: string;
+  Value: string;
 }
 type MandatorFunction = (parameters: Parameter[]) => MandatoryParameter[];
+
+const FORMATTERS = new Map([
+  ['dotenv', (parameters: MandatoryParameter[]) => {
+    const filename = core.getInput('filename') || DEFAULT_DOTENV_FILENAME;
+    const content = parameters.map(param => `${path.basename(param.Name)}=${param.Value}`).join(EOL);
+    fs.writeFileSync(filename, content);
+  }],
+  ['as-is', (parameters: MandatoryParameter[]) => {
+    const {Name, Value} = parameters[0];
+    const filename = core.getInput('filename') || path.basename(Name);
+    fs.writeFileSync(filename, Value);
+  }],
+]);
 
 async function main() {
   const credentials = {
@@ -54,16 +42,13 @@ async function main() {
 
   const result: GetParametersByPathCommandOutput = await client.send(command);
   const pattern = core.getInput('pattern');
-  const matcher = (parameter: MandatoryParameter) => pattern ? minimatch(parameter.Name, pattern) : true;
+  const matcher = (parameter: MandatoryParameter) => pattern ? minimatch(path.basename(parameter.Name), pattern) : true;
   const mandate = ((parameters: Parameter[]) => parameters.filter(p => p.Name && p.Value)) as MandatorFunction;
   const parameters = mandate(result.Parameters || []).filter(matcher);
   parameters.forEach(parameter => {
     core.setOutput(path.basename(parameter.Name), parameter.Value);
   });
-  const formatter = FORMATTERS.get(core.getInput('format'));
-  if (formatter) {
-    formatter.save(parameters);
-  }
+  FORMATTERS.get(core.getInput('format'))?.call(null, parameters);
 }
 main().catch(e => core.setFailed(e.message));
 
