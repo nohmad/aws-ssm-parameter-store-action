@@ -1,7 +1,7 @@
 import fs from 'fs';
 import { EOL } from 'os';
 import path from 'path';
-import { SSMClient, GetParametersByPathCommand, GetParametersByPathCommandOutput, Parameter } from '@aws-sdk/client-ssm';
+import { SSMClient, GetParametersByPathCommand, Parameter } from '@aws-sdk/client-ssm';
 import * as core from '@actions/core';
 import minimatch from 'minimatch';
 
@@ -40,7 +40,10 @@ async function main() {
     Recursive: core.getBooleanInput('recursive'),
   });
 
-  const result: GetParametersByPathCommandOutput = await client.send(command);
+  const result = await client.send(command);
+  if (core.isDebug()) {
+    core.debug(JSON.stringify(result));
+  }
   const pattern = core.getInput('pattern');
   const matcher = (parameter: MandatoryParameter) => pattern ? minimatch(path.basename(parameter.Name), pattern) : true;
   const mandate = ((parameters: Parameter[]) => parameters.filter(p => p.Name && p.Value)) as MandatorFunction;
