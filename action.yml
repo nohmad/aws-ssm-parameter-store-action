@@ -12,23 +12,25 @@ inputs:
     description: AWS_REGION
     required: true
   path:
-    description: Path to parameters
-    required: true
-  filename:
-    description: File name to be written
+    description: Path to parameters to get by
     required: true
   recursive:
     description: Whether to get recursively
     required: false
     default: 'false'
+  pattern:
+    description: Pattern to match parameter's base name (without path)
+    required: false
   with-decryption:
     description: Whether to decrypt
     required: false
     default: 'true'
-
-outputs:
-  count:
-    description: Number of parameters matched by path given
+  format:
+    description: Format to save as _dotenv_ or _as-is_. `outputs` are available even if it is empty
+    required: false
+  filename:
+    description: File name to be written
+    required: false
 
 runs:
   using: node12
