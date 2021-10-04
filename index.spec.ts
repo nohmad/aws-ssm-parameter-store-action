@@ -103,13 +103,30 @@ describe("aws-parameter-store-action", () => {
 
   it("prints out debug log if enabled debugging", async () => {
     (core.isDebug as jest.MockedFunction<typeof core.isDebug>).mockReturnValue(true);
-
-    const result = {xxx: 'yyy'};
-    const send = jest.fn(async () => result);
+    const Parameters = [{Name: 'xxx', Value: 'yyy'}];
+    const send = jest.fn(async () => Object.assign({Parameters}));
     (MockedClient as jest.Mock).mockImplementation(() => ({send}));
 
     await main();
 
-    expect(core.debug).toHaveBeenCalledWith(JSON.stringify(result));
+    expect(core.debug).toHaveBeenCalledWith(JSON.stringify(Parameters));
+  });
+
+  it("executes additional commands if NextToken present", async () => {
+    const Parameters = [{Name: 'xxx', Value: 'yyy'}];
+    let calls = 0;
+    const send = jest.fn(async () => {
+      if (calls == 0) {
+        calls++;
+        return ({Parameters, NextToken: 'x'});
+      } else {
+        return ({Parameters});
+      }
+    });
+    (MockedClient as jest.Mock).mockImplementationOnce(() => ({send}));
+
+    await main();
+
+    expect(send).toHaveBeenCalledTimes(2);
   });
 });
