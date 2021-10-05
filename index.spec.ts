@@ -113,14 +113,17 @@ describe("aws-parameter-store-action", () => {
   });
 
   it("executes additional commands if NextToken present", async () => {
-    const Parameters = [{Name: 'xxx', Value: 'yyy'}];
+    const inputs = new Map([...DEFAULT_INPUTS,
+      ['format', 'dotenv'],
+    ]);
+    getInput.mockImplementation((key) => inputs.get(key) as string);
     let calls = 0;
     const send = jest.fn(async () => {
       if (calls == 0) {
         calls++;
-        return ({Parameters, NextToken: 'x'});
+        return ({Parameters: [{Name: 'x1', Value: 'y1'}], NextToken: 'x'});
       } else {
-        return ({Parameters});
+        return ({Parameters: [{Name: 'x2', Value: 'y2'}]});
       }
     });
     (MockedClient as jest.Mock).mockImplementationOnce(() => ({send}));
@@ -128,5 +131,6 @@ describe("aws-parameter-store-action", () => {
     await main();
 
     expect(send).toHaveBeenCalledTimes(2);
+    expect(fs.writeFileSync).toHaveBeenCalledWith('.env', 'x1=y1\nx2=y2');
   });
 });
