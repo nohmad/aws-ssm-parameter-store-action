@@ -103,13 +103,34 @@ describe("aws-parameter-store-action", () => {
 
   it("prints out debug log if enabled debugging", async () => {
     (core.isDebug as jest.MockedFunction<typeof core.isDebug>).mockReturnValue(true);
-
-    const result = {xxx: 'yyy'};
-    const send = jest.fn(async () => result);
+    const Parameters = [{Name: 'xxx', Value: 'yyy'}];
+    const send = jest.fn(async () => Object.assign({Parameters}));
     (MockedClient as jest.Mock).mockImplementation(() => ({send}));
 
     await main();
 
-    expect(core.debug).toHaveBeenCalledWith(JSON.stringify(result));
+    expect(core.debug).toHaveBeenCalledWith(JSON.stringify(Parameters));
+  });
+
+  it("executes additional commands if NextToken present", async () => {
+    const inputs = new Map([...DEFAULT_INPUTS,
+      ['format', 'dotenv'],
+    ]);
+    getInput.mockImplementation((key) => inputs.get(key) as string);
+    let calls = 0;
+    const send = jest.fn(async () => {
+      if (calls == 0) {
+        calls++;
+        return ({Parameters: [{Name: 'x1', Value: 'y1'}], NextToken: 'x'});
+      } else {
+        return ({Parameters: [{Name: 'x2', Value: 'y2'}]});
+      }
+    });
+    (MockedClient as jest.Mock).mockImplementationOnce(() => ({send}));
+
+    await main();
+
+    expect(send).toHaveBeenCalledTimes(2);
+    expect(fs.writeFileSync).toHaveBeenCalledWith('.env', 'x1=y1\nx2=y2');
   });
 });

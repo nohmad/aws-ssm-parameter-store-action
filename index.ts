@@ -1,7 +1,7 @@
 import fs from 'fs';
 import { EOL } from 'os';
 import path from 'path';
-import { SSMClient, GetParametersByPathCommand, Parameter } from '@aws-sdk/client-ssm';
+import { SSMClient, GetParametersByPathCommand, Parameter, GetParametersByPathCommandInput } from '@aws-sdk/client-ssm';
 import * as core from '@actions/core';
 import minimatch from 'minimatch';
 
@@ -33,21 +33,30 @@ async function main() {
   };
   const region = core.getInput('aws-region');
   const Path = core.getInput('path');
+  const pattern = core.getInput('pattern');
   const client = new SSMClient({region, credentials});
-  const command = new GetParametersByPathCommand({
+  const input: GetParametersByPathCommandInput = {
     Path,
     WithDecryption: core.getBooleanInput('with-decryption'),
     Recursive: core.getBooleanInput('recursive'),
-  });
-
-  const result = await client.send(command);
-  if (core.isDebug()) {
-    core.debug(JSON.stringify(result));
-  }
-  const pattern = core.getInput('pattern');
-  const matcher = (parameter: MandatoryParameter) => pattern ? minimatch(path.basename(parameter.Name), pattern) : true;
+  };
+  const parameters: MandatoryParameter[] = [];
   const mandate = ((parameters: Parameter[]) => parameters.filter(p => p.Name && p.Value)) as MandatorFunction;
-  const parameters = mandate(result.Parameters || []).filter(matcher);
+  const matcher = (parameter: MandatoryParameter) => pattern ? minimatch(path.basename(parameter.Name), pattern) : true;
+
+  while (true) {
+    const command = new GetParametersByPathCommand(input);
+    const result = await client.send(command);
+    parameters.push(...(mandate(result.Parameters || []).filter(matcher)));
+    if (result.NextToken) {
+      Object.assign(input, {NextToken: result.NextToken});
+    } else {
+      break;
+    }
+  }
+  if (core.isDebug()) {
+    core.debug(JSON.stringify(parameters));
+  }
   parameters.forEach(parameter => {
     core.setOutput(path.basename(parameter.Name), parameter.Value);
   });
