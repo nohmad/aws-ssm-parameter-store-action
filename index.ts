@@ -27,14 +27,9 @@ const FORMATTERS = new Map([
 ]);
 
 async function main() {
-  const credentials = {
-    accessKeyId: core.getInput('aws-access-key-id'),
-    secretAccessKey: core.getInput('aws-secret-access-key'),
-  };
-  const region = core.getInput('aws-region');
   const Path = core.getInput('path');
   const pattern = core.getInput('pattern');
-  const client = new SSMClient({region, credentials});
+  const client = new SSMClient({});
   const input: GetParametersByPathCommandInput = {
     Path,
     WithDecryption: core.getBooleanInput('with-decryption'),

@@ -13,9 +13,6 @@ Run this action:
     - name: Prepare .env file
       uses: nohmad/aws-ssm-parameter-store-action@master
       with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ap-northeast-2
         path: /config/application/production/
         format: dotenv
         filename: .env
@@ -29,18 +26,6 @@ API_KEY=...
 ```
 
 ## Inputs
-
-### aws-access-key-id
-
-**Required**. `secrets.AWS_ACCESS_KEY_ID`
-
-### aws-secret-access-key
-
-**Required**. `secrets.AWS_SECRET_ACCESS_KEY`
-
-### aws-region
-
-**Required**. `secrets.AWS_REGION`
 
 ### path
 
