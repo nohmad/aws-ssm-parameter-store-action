@@ -29,7 +29,7 @@ const FORMATTERS = new Map([
 async function main() {
   const Path = core.getInput('path');
   const pattern = core.getInput('pattern');
-  const client = new SSMClient({});
+  const client = new SSMClient({ region: process.env.AWS_DEFAULT_REGION });
   const input: GetParametersByPathCommandInput = {
     Path,
     WithDecryption: core.getBooleanInput('with-decryption'),
