@@ -10,6 +10,11 @@ Suppose you have following parameters in AWS's parameter store:
 Run this action:
 
 ```yml
+    - uses: aws-actions/configure-aws-credentials@v3
+      name: Configure AWS Credentials
+      with:
+        role-to-assume: ROLE_ARN
+        aws-region: ap-northeast-2
     - name: Prepare .env file
       uses: nohmad/aws-ssm-parameter-store-action@master
       with:
@@ -24,6 +29,8 @@ Then, you'll have `.env` file with following:
 API_ENDPOINT=...
 API_KEY=...
 ```
+
+Make sure the IAM role given with `ROLE_ARN` has got `ssm:GetParametersByPath` permission on the parameters you want to get.
 
 ## Inputs
 

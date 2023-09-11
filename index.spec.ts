@@ -13,9 +13,6 @@ const MockedClient = SSMClient as jest.Mocked<typeof SSMClient>;
 const getInput = core.getInput as jest.MockedFunction<typeof core.getInput>;
 
 const DEFAULT_INPUTS = new Map([
-  ['aws-access-key-id', 'aws-access-key-id'],
-  ['aws-secret-access-key', 'aws-secret-access-key'],
-  ['aws-region', 'aws-region'],
   ['path', '/config/path/'],
 ]);
 
